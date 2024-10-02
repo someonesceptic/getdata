@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import StockTable from '../components/StockTable';
 
 interface StockData {
-  date: string;
+  datetime: string;
   open: number;
   high: number;
   low: number;
@@ -20,7 +20,8 @@ export default function Home() {
       try {
         const response = await fetch('/api/stock-data');
         if (!response.ok) {
-          throw new Error('Failed to fetch stock data');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch stock data');
         }
         const data = await response.json();
         setStockData(data);
@@ -39,7 +40,7 @@ export default function Home() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-4">AAPL Monthly OHLC Data</h1>
+      <h1 className="text-3xl font-bold mb-4">AAPL Monthly OHLC Data (Twelve Data)</h1>
       <div className="overflow-x-auto">
         <StockTable data={stockData} />
       </div>

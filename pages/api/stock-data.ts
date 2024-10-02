@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 
 interface StockData {
-  date: string;
+  datetime: string;
   open: number;
   high: number;
   low: number;
@@ -14,33 +14,43 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<StockData[] | { error: string }>
 ) {
-  const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
+  console.log('Environment variables:', process.env);
+
+  const apiKey = process.env.TWELVE_DATA_API_KEY;
+  console.log('API Key:', apiKey ? 'Set' : 'Not set');
 
   if (!apiKey) {
+    console.error('API key is not set');
     return res.status(500).json({ error: 'API key not configured' });
   }
 
   try {
-    const response = await axios.get(`https://www.alphavantage.co/query`, {
+    const response = await axios.get('https://api.twelvedata.com/time_series', {
       params: {
-        function: 'TIME_SERIES_MONTHLY',
         symbol: 'AAPL',
+        interval: '1month',
         apikey: apiKey,
-      },
+        format: 'JSON',
+        outputsize: '5000'
+      }
     });
 
-    const monthlyTimeSeries = response.data['Monthly Time Series'];
-    const formattedData: StockData[] = Object.entries(monthlyTimeSeries).map(([date, values]: [string, any]) => ({
-      date,
-      open: parseFloat(values['1. open']),
-      high: parseFloat(values['2. high']),
-      low: parseFloat(values['3. low']),
-      close: parseFloat(values['4. close']),
-      volume: parseInt(values['5. volume']),
+    if (response.data.status === 'error') {
+      throw new Error(response.data.message || 'Unknown error from Twelve Data API');
+    }
+
+    const stockData: StockData[] = response.data.values.map((item: any) => ({
+      datetime: item.datetime,
+      open: parseFloat(item.open),
+      high: parseFloat(item.high),
+      low: parseFloat(item.low),
+      close: parseFloat(item.close),
+      volume: parseInt(item.volume)
     }));
 
-    res.status(200).json(formattedData);
+    res.status(200).json(stockData);
   } catch (error) {
-    res.status(500).json({ error: 'Error fetching stock data' });
+    console.error('Error details:', error);
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Error fetching stock data' });
   }
 }

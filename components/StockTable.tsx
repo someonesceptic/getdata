@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-table';
 
 interface StockData {
-  date: string;
+  datetime: string;
   open: number;
   high: number;
   low: number;
@@ -22,7 +22,7 @@ interface StockTableProps {
 const StockTable: React.FC<StockTableProps> = ({ data }) => {
   const columns = React.useMemo<ColumnDef<StockData>[]>(
     () => [
-      { header: 'Date', accessorKey: 'date' },
+      { header: 'Date', accessorKey: 'datetime' },
       { header: 'Open', accessorKey: 'open' },
       { header: 'High', accessorKey: 'high' },
       { header: 'Low', accessorKey: 'low' },
